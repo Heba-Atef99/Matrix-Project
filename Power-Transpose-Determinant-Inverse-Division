@@ -1,0 +1,304 @@
+#include<iostream>
+#include<string>
+#include<cstdlib>
+#include<sstream>
+#include<math.h>
+using namespace std;
+
+void count(string mat, int& R, int& C) {
+	int i;
+	R = 1, C = 1;
+
+	for (i = 1; i < mat.length(); i++) {
+		if (mat[i] == ';') break;
+		else if (mat[i] == ' ') C++;
+	}
+
+	for (i = 0; i < mat.length(); i++)
+		if (mat[i] == ';') R++;
+}
+
+void check(string mat, int r, int c, int& cond) {
+	int i, j, col, m = 1;
+	cond = 1;
+	for (i = 1; i <= r; i++) {
+		col = 1;
+		for (j = m; j < mat.length() - 1; j++) {
+			m = j;
+			if (mat[j] == ';' || mat[j] == ']') { m++;  break; }
+			else if (mat[j] == ' ') col++;
+		}
+		if (col == c)cond = 1;
+		else if (col != c) { cond = 0; break; }
+	}
+}
+
+void cutString(string mat, int r, int c, float(&array)[100][100]) {
+	int i, j, k = 1, m, l;
+	for (i = 0; i <= r; i++) {
+
+		for (j = 0; j <= c; j++) {
+			l = 0;
+			for (m = k; m < mat.length(); m++) {
+				if (mat[m] != ' ' && mat[m] != ';' && mat[m] != ']')
+					l++;
+				else break;
+			}
+
+			if (mat[k] != ' ' && mat[k] != ';') {
+				array[i][j] = atof((mat.substr(k, l)).c_str());
+				k += l;
+			}
+			else { j--; k++; }
+
+			if (mat[k] == ';') { k++; break; }
+			if (k == mat.length() - 1) break;
+		}
+
+		if (k == mat.length() - 1) break;
+	}
+}
+
+float D_matOf2x2(float array[100][100]) {
+	float result;
+	result = array[0][0] * array[1][1] - array[0][1] * array[1][0];
+	return result;
+}
+
+float D_matOf3x3(float array[100][100]) {
+	float result=0, newArray[100][100];
+	int m = 0, n = 0, r = 3,c1;
+	for(c1=0;c1<3;c1++){
+	for (int i = 0; i < r - 1; i++) {
+		for (int j = 0; j < r - 1; j++) {
+			m = i + 1;
+			n = j + 1;
+			if (n == c1) n--;
+			if (c1 == r - 1) n = j;
+			newArray[i][j] = array[m][n];
+		}
+	}
+	result += array[0][c1] * D_matOf2x2(newArray)*pow((-1), c1);
+}
+	return result;
+}
+
+float Deter(float array[100][100], int r) {
+	int m = 0, n = 0, t = r, c1;
+	float newarray[100][100], result1 = 0, result2 = 0;
+
+	if (r == 2) result2 = D_matOf2x2(array);
+
+	else if (r == 3) result2 = D_matOf3x3(array);
+
+	else {
+		for (c1 = 0; c1 <= r - 1; c1++) {
+			for (int i = 0; i < r - 1; i++) {
+				n = c1;
+				for (int j = 0; j < r - 1; j++) {
+					m = i + 1;
+					if (c1 > 0 && j == 0)n -= c1;
+					if (n == c1)n++;
+					newarray[i][j] = array[m][n];
+					n++;
+				}
+			}
+
+			result1 = Deter(newarray,t-1);
+			result2 += pow(-1, c1) * array[0][c1] * result1;
+		}
+	}
+	return result2;
+}
+
+void adj(float array[100][100], int r, float(&result2)[100][100]) {
+	float result1[100][100];
+	if (r == 2) {
+		result2[0][0] = array[1][1];
+		result2[1][1] = array[0][0];
+		result2[0][1] = -1.0 * array[1][0];
+		result2[1][0] = -1.0 * array[0][1];
+	}
+	else {
+		float newArray[100][100], result1[100][100];
+		int m = 0, n = 0, c1, count = 0;
+		for (int r1 = 0; r1 < r; r1++) {
+			for (c1 = 0; c1 < r; c1++) {
+				m = r1;
+				for (int i = 0; i < r - 1; i++) {
+					n = c1;
+					for (int j = 0; j < r - 1; j++) {
+						if (c1 > 0 && j==0)n -= c1;
+						if (n == c1)n++;
+						if (r1 > 0 && j==0 && i==0)m -= r1;
+						if (m == r1 )m++;
+						newArray[i][j] = array[m][n];
+						n++;			
+					}
+					m++;
+				}
+				result1[r1][c1] = Deter(newArray,r-1)*pow((-1), count);
+				count++;
+			}
+			if(r%2==0) count++;
+		}
+		for (int i = 0; i < r; i++) {
+			for (int j = 0; j < r; j++) result2[i][j] = result1[j][i];
+		}
+	}
+
+}
+
+void operating(float array[100][100], int& r, int& c, string op, float power, float(&result)[100][100], int& cond) {
+	int i, j, k, l, R, C;
+	float sum, ress[100][100];
+	cond = 0;
+
+	if (op == "^" && power > 0 && r == c) {
+		cond = 1;
+		for (i = 0; i < r; i++) {
+			for (j = 0; j < c; j++) result[i][j] = array[i][j];
+		}
+
+		for (l = 1; l < power; l++) {
+			for (i = 0; i < r; i++) {
+				for (j = 0; j < c; j++) {
+					sum = 0;
+					for (k = 0; k < c; k++) sum += result[i][k] * array[k][j];
+					ress[i][j] = sum;
+				}
+			}
+			for (i = 0; i < r; i++) {
+				for (j = 0; j < c; j++) result[i][j] = ress[i][j];
+			}
+		}
+	}
+
+	if (op == "T") {
+		cond = 1;
+		R = c; C = r;
+		r = R; c = C;
+		for (i = 0; i < r; i++) {
+			for (j = 0; j < c; j++) result[i][j] = array[j][i];
+		}
+	}
+	
+	else if (op == "D" && r == c) {
+		cond = 1;
+		result[0][0] = Deter(array, r);
+	}
+
+else if (op == "I" && r == c) {
+		cond = 1;
+		float d, ad[100][100];
+		d = Deter(array, r);
+		adj(array, r, ad);
+		for (int i = 0; i < r; i++) {
+			for (int j = 0; j < r; j++)	result[i][j] = (1.0 / d)*ad[i][j];	
+		}
+	}
+
+}
+
+void div(float array1[100][100], int r1, int c1, float array2[100][100], int r2, int c2, float(&result)[100][100]) {
+	int cond = 0; float sum; float array3[100][100];
+	operating(array2, r2, c2, "I", 0, array3, cond);
+	if ( c1 == c2) {
+		cond = 1;
+		for (int i = 0; i <= r1; i++) {
+			for (int j = 0; j < c2; j++) {
+				sum = 0;
+				for (int k = 0; k < c1; k++)
+					sum += array1[i][k] * array3[k][j];
+				result[i][j] = sum;
+			}
+		}
+	}
+}
+
+void Print(float Result[100][100], int r, int c, string& result) {
+	int i, j, k = 1, space = 0;
+	string total;
+	ostringstream ss;
+	ss << "[";
+	for (i = 0; i < r; i++) {
+		for (j = 0; j < c; j++) {
+			ss << Result[i][j];
+			if (j < (c - 1)) ss << " ";
+		}
+		if (i < (r - 1)) ss << ";";
+	}
+	ss << "]";
+	result = ss.str();
+}
+ 
+
+int main() {
+	//Variables
+	string Ms,Ms2 , op, powS, powSub, Result;
+	float M[100][100],M2[100][100],powA,powB,checkP, result[100][100];
+	int r, c,r2,c2, cond1, cond2;
+	//saving users' inputs
+	getline(cin, Ms);
+	getline(cin, op);
+	//counting the matrix & cutting the string
+	count(Ms, r, c);
+	cutString(Ms, r, c, M);
+	
+	if(op=="/") 
+	{getline(cin, Ms2);
+    count(Ms2, r2, c2);
+	cutString(Ms2, r2, c2, M2);
+	}
+
+    //checking the matrix is right
+	check(Ms, r, c, cond1);
+	if (cond1 == 1)
+	{
+		//in case of power operator
+		if (op == "^") {
+			getline(cin, powS);
+			//check if the power is intger
+			int l = powS.find(".");
+			powSub = powS.substr(0, l);
+			powB = atof(powS.c_str());
+			powA = atof(powSub.c_str());
+			checkP = powB - powA;
+			//operating
+			if (checkP == 0) {
+				operating(M, r, c, op, powA, result, cond2);
+
+				if (cond2 == 1) {
+					Print(result, r, c, Result);
+					cout << Result;
+				}
+				else cout << "ERROR";
+			}
+			else cout << "ERROR";
+		}
+	
+		//in case of division operator
+		else if(op == "/"){
+		    if(c==c2){
+		div(M,r,c,M2,r2,c2,result);
+		Print(result, r, c, Result);
+		cout << Result;}
+		    else cout<<"ERROR";
+		}
+	
+		//in case of other operators
+		else {
+			 operating(M, r, c, op, powA, result, cond2);
+			if (cond2 == 1) {
+			if (op == "D") cout << result[0][0];
+			else{
+				Print(result, r, c, Result);
+				cout << Result;
+			}
+			}
+			else cout << "ERROR";
+		}
+	}
+	else if(cond1==0) cout << "ERROR";
+	return 0;
+}
