@@ -1,0 +1,153 @@
+#include<iostream>
+#include<string>
+#include<cstdlib>
+#include<sstream>
+
+using namespace std;
+
+void count(string mat, int& R, int& C) {
+	int i;
+	R = 1, C = 1;
+
+	for (i = 1; i < mat.length(); i++) {
+		if (mat[i] == ';') break;
+		else if (mat[i] == ' ') C++;
+	}
+
+	for (i = 0; i < mat.length(); i++)
+		if (mat[i] == ';') R++;
+}
+
+
+void check(string mat, int r, int c, int& cond) {
+	int i, j, col, m = 1;
+	cond = 1;
+	for (i = 1; i <= r; i++) {
+		col = 1;
+		for (j = m; j < mat.length() - 1; j++) {
+			m = j;
+			if (mat[j] == ';' || mat[j] == ']') { m++;  break; }
+			else if (mat[j] == ' ') col++;
+		}
+		if (col == c)cond = 1;
+		else if (col != c) { cond = 0; break; }	}
+}
+
+void cutString(string mat, int r, int c, float(&array)[100][100]) {
+	int i, j, k = 1, m, l;
+	for (i = 0; i <= r; i++) {
+
+		for (j = 0; j <= c; j++) {
+			l = 0;
+			for (m = k; m < mat.length(); m++) {
+				if (mat[m] != ' ' && mat[m] != ';' && mat[m] != ']')
+					l++;
+				else break;
+			}
+
+			if (mat[k] != ' ' && mat[k] != ';') {
+				array[i][j] = atof((mat.substr(k, l)).c_str());
+				k += l;
+			}
+			else { j--; k++; }
+
+			if (mat[k] == ';') { k++; break; }
+			if (k == mat.length() - 1) break;
+		}
+
+		if (k == mat.length() - 1) break;
+	}
+}
+
+void operating(float array1[100][100], int r1, int c1, string op, float array2[100][100], int r2, int c2, float(&result)[100][100], int& cond) {
+	int i, j, k; float sum;
+
+	if (op == "+" && r1 == r2 & c1 == c2) {
+		cond = 1;
+		for (i = 0; i <= r1; i++) {
+			for (j = 0; j <= c1; j++)
+				result[i][j] = array1[i][j] + array2[i][j];
+		}
+	}
+
+	else if (op == "-" && r1 == r2 & c1 == c2) {
+		cond = 1;
+		for (i = 0; i <= r1; i++) {
+			for (j = 0; j <= c1; j++)
+				result[i][j] = array1[i][j] - array2[i][j];
+		}
+	}
+
+	else if (op == "*" && c1 == r2) {
+		cond = 1;
+		for (i = 0; i <= r1; i++) {
+
+			for (j = 0; j < c2; j++) {
+				sum = 0;
+				for (k = 0; k < c1; k++)
+					sum += array1[i][k] * array2[k][j];
+				result[i][j] = sum;
+			}
+		}
+	}
+
+	else if (r1 != r2 || c1 != c2) cond = 0;
+}
+
+
+void Print(float Result[100][100], int r, int c, string& result) {
+	int i, j, k = 1, space = 0;
+	string total;
+	ostringstream ss;
+	ss << "[";
+	for (i = 0; i < r; i++) {
+		for (j = 0; j < c; j++) {
+		ss << Result[i][j];
+		if (j < (c - 1)) ss << " ";
+		}
+	if (i < (r - 1)) ss << ";";
+	}
+	ss << "]";
+	result = ss.str();
+}
+
+int main() {
+	int r1, c1 ,r2,c2, cond1,cond2,cond3;
+
+	//Read the matrix from user 
+	string M1s , M2s , op , ress;
+	getline(cin, M1s);
+	getline(cin,op);
+	getline(cin, M2s);
+
+	float M1[100][100], M2[100][100], Result[100][100] ;
+	int i, j;
+
+	//counting the matrix
+	count(M1s, r1, c1);
+	count(M2s, r2, c2);
+
+	//Checks if the matrix is good
+	check(M1s, r1, c1, cond1);
+	if (cond1 == 0) cout << "ERROR";
+	check(M2s, r2, c2, cond2);
+	if (cond2== 0) cout << "ERROR";
+	
+	//cutting the string
+	cutString(M1s,r1,c1,M1);
+	cutString(M2s, r2, c2, M2);
+
+	//Operating on the two matrixes 
+	if (cond1 == 1 && cond2 == 1) {
+		operating(M1, r1, c1, op, M2, r2, c2, Result, cond3);
+
+		//Printing the matrix
+		if (cond3 == 1) {
+			Print(Result,r1,c2,ress);
+			cout << ress;
+		}
+		else if (cond3 == 0) cout << "ERROR";
+	}
+
+	return 0;
+}
