@@ -1,0 +1,154 @@
+#include<iostream>
+#include<cstdlib>
+#include<string>
+using namespace std;
+
+class Complex {
+private:
+	float real, imj;
+public:
+	void set_real(float r) { real = r; }
+	void set_imj(float i) { imj = i; }
+	float get_real() { return real; }
+	float get_imj() { return imj; }
+
+	Complex addition(Complex c1,Complex c2){
+		Complex result;
+		real = c1.get_real() + c2.get_real();
+		imj = c1.get_imj() + c2.get_imj();
+		result.set_real(real);
+		result.set_imj(imj);
+		return result;
+	}
+
+	Complex sub( Complex c1,Complex c2) {
+		Complex result;
+		real = c1.get_real() - c2.get_real();
+		imj = c1.get_imj() - c2.get_imj();
+		result.set_real(real);
+		result.set_imj(imj);
+		return result;
+	}
+
+Complex mul(Complex c1, Complex c2) {
+		Complex result;
+		real =c1.get_real()* c2.get_real() - c1.get_imj() * c2.get_imj();
+		imj =c1.get_real() * c2.get_imj() + c1.get_imj() * c2.get_real();
+		result.set_real(real);
+		result.set_imj(imj);
+		return result;
+	}
+};
+
+void count(string mat, int& R, int& C) {
+	int i;
+	R = 1, C = 1;
+
+	for (i = 1; i < mat.length(); i++) {
+		if (mat[i] == ';') break;
+		else if (mat[i] == ' ') C++;
+	}
+
+	for (i = 0; i < mat.length(); i++)
+		if (mat[i] == ';') R++;
+}
+
+void cutString(string Ms, int r, int c, Complex(&m)[100][100]) {
+	int index;
+	for (int i = 0; i < r; i++) {
+		for (int j = 0; j < c; j++) {
+			if (Ms[0] == '[') Ms = Ms.substr(1, Ms.length() - 2);
+
+			for (int h = 0; h < Ms.length(); h++) {
+			    if (Ms[0] == '-' && h==0 ) h++;
+				if (Ms[h] == '+' || Ms[h] == '-') {
+					index = h;
+					break;
+				}
+			}
+			m[i][j].set_real(atof(Ms.substr(0, index).c_str()));
+			Ms = Ms.substr(index, Ms.length() - index);
+
+			if (Ms[0] == '+') Ms = Ms.substr(1, Ms.length() - 1);
+
+
+			for (int h = 0; h < Ms.length(); h++) {
+				if (Ms[h] == 'i') {
+					index = h;
+					break;
+				}
+			}
+			m[i][j].set_imj(atof(Ms.substr(0, index).c_str()));
+			if (i != r - 1 || j!= c-1)  Ms = Ms.substr(index + 2, Ms.length() - 2 - index);
+		}
+	}
+}
+
+void print(Complex result[100][100], int r1, int c2) {
+	cout << "[";
+	for (int i = 0; i < r1; i++) {
+		for (int j = 0; j < c2; j++) {
+			cout << result[i][j].get_real();
+			if (result[i][j].get_imj() >= 0) cout << "+";
+			cout << result[i][j].get_imj() << "i";
+			if (j < (c2 - 1)) cout << " ";
+		}
+		if (i < (r1 - 1)) cout << ";";
+	}
+	cout << "]";
+}
+
+int main() {
+	string Ms1, Ms2, op;
+	int r1, c1, r2, c2, index;
+	Complex m1[100][100], m2[100][100],result[100][100],mcons;
+
+	getline(cin, Ms1);
+	getline(cin, op);
+	getline(cin, Ms2);
+	count(Ms1, r1, c1);
+	count(Ms2, r2, c2);
+	
+	cutString(Ms1,r1,c1, m1);
+	cutString(Ms2, r2, c2, m2);
+
+for (int i = 0; i < 100; i++) {
+		for (int j = 0; j < 100; j++) {
+			result[i][j].set_real(0); result[i][j].set_imj(0);
+		}
+	}
+
+	if (r1 == r2 && c1 == c2 && (op=="+" || op=="-")) {
+		if (op == "+") {
+			for (int i = 0; i < r1; i++) {
+				for (int j = 0; j < c1; j++)
+					result[i][j].addition(m1[i][j], m2[i][j]);
+			}
+		}
+
+		else if (op == "-") {
+			for (int i = 0; i < r1; i++) {
+				for (int j = 0; j < c1; j++)
+					result[i][j].sub(m1[i][j], m2[i][j]);
+			}
+		}
+		print(result, r1, c2);
+	}
+	
+else if (c1 == r2 && op=="*") {
+		for (int i = 0; i <= r1; i++) {
+			for (int j = 0; j < c2; j++) {
+				for (int k = 0; k < c1; k++) {
+					mcons.mul(m1[i][k], m2[k][j]);
+					result[i][j].addition(result[i][j],mcons);
+				}
+			}
+		}
+		
+		print(result, r1, c2);
+	}
+	
+	else cout << "ERROR";
+
+    return 0;
+}
